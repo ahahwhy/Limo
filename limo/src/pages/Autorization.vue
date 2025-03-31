@@ -1,8 +1,8 @@
 <template>
-  <div class="flex justify-between">
+  <div class="flex justify-between mb-32">
     <div class="w-1/2 mt-32 ml-12 bg-gray-100 text-xl shadow-xl rounded-xl">
-      <h1 class="text-3xl pt-6 text-center">Авторизация</h1>
-      <form @submit.prevent="handleSubmit" class="ml-20 mt-4">
+      <h1 class="text-3xl pt-16 text-center">Авторизация</h1>
+      <form @submit.prevent="handleSubmit" class="ml-20 mt-16">
         <div class="mt-4">
           <label for="email" class="block text-medium text-gray-700 px-1">Email</label>
           <input
@@ -27,9 +27,6 @@
             required
           />
         </div>
-        <div class="flex justify-end pe-24 text-lg">
-          <a class="text-gray-400 hover:text-lime-400 p-2 cursor-pointer">Восстановление пароля</a>
-        </div>
 
         <div class="flex justify-center pe-24 mt-8">
           <button
@@ -42,7 +39,7 @@
           </button>
         </div>
 
-        <div class="flex justify-center pe-24 mt-8 pb-2">
+        <div class="flex justify-center pe-24 mt-2 pb-2">
           <span class="text-gray-400">Нет аккаунта?</span>
           <router-link
             :to="{ name: 'Registration' }"
@@ -54,7 +51,7 @@
       </form>
     </div>
 
-    <div class="pt-28">
+    <div class="pt-16">
       <img src="/IllustrationTwo.svg" alt="illustration" class="w-[700px] h-[600px]" />
     </div>
   </div>

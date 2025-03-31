@@ -4,6 +4,7 @@ import GroupTrenings from '../pages/GroupTrenings.vue'
 import Autorization from '../pages/Autorization.vue'
 import Registration from '@/pages/Registration.vue'
 import Account from '../pages/Account.vue'
+import Calculate from '@/pages/Calculate.vue'
 
 const routes = [
   {
@@ -26,6 +27,11 @@ const routes = [
     path: '/registration',
     name: 'Registration',
     component: Registration,
+  },
+  {
+    path: '/calculate',
+    name: 'Calculate',
+    component: Calculate,
   },
 
   {

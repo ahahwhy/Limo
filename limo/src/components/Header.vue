@@ -20,7 +20,7 @@
           <a>Упражнения</a>
         </li>
         <li class="hover:text-lime-400 cursor-pointer">
-          <a>Калькулятор калорий</a>
+          <RouterLink :to="{ name: 'Calculate' }">Калькулятор калорий</RouterLink>
         </li>
 
         <li
