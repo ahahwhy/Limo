@@ -1,6 +1,6 @@
 <template>
   <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-lg p-6 w-full max-w-2xl">
+    <div class="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
       <h2 class="text-xl font-semibold mb-4">Добавить новую тренировку</h2>
 
       <form @submit.prevent="submitTraining">
@@ -134,7 +134,82 @@
             ></textarea>
           </div>
 
-          <div class="flex justify-end space-x-3 pt-4">
+          <!-- Блок упражнений -->
+          <div class="mb-6">
+            <h3 class="text-lg font-medium mb-3">Упражнения</h3>
+
+            <div
+              v-for="(exercise, index) in form.exercises"
+              :key="index"
+              class="mb-4 p-3 border border-gray-200 rounded-lg"
+            >
+              <div class="grid grid-cols-12 gap-3 mb-3">
+                <!-- Подходы x Повторения -->
+                <div class="col-span-4">
+                  <label class="block text-sm font-medium text-gray-700 mb-1"
+                    >Подходы × Повторения</label
+                  >
+                  <div class="flex items-center">
+                    <input
+                      v-model.number="exercise.sets"
+                      type="number"
+                      min="1"
+                      max="10"
+                      class="w-16 px-3 py-2 border border-gray-300 rounded-lg text-center"
+                      placeholder="3"
+                    />
+                    <span class="mx-2">×</span>
+                    <input
+                      v-model.number="exercise.reps"
+                      type="number"
+                      min="1"
+                      max="50"
+                      class="w-16 px-3 py-2 border border-gray-300 rounded-lg text-center"
+                      placeholder="12"
+                    />
+                  </div>
+                </div>
+
+                <!-- Описание упражнения -->
+                <div class="col-span-8">
+                  <label class="block text-sm font-medium text-gray-700 mb-1"
+                    >Описание упражнения</label
+                  >
+                  <textarea
+                    v-model="exercise.description"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    rows="2"
+                    placeholder="Техника выполнения, рекомендации..."
+                    required
+                  ></textarea>
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              @click="addExercise"
+              class="mt-2 flex items-center text-lime-600 hover:text-lime-800"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5 mr-1"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                />
+              </svg>
+              Добавить упражнение
+            </button>
+          </div>
+
+          <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
             <button
               type="button"
               @click="$emit('cancel')"
@@ -147,7 +222,7 @@
               class="px-4 py-2 bg-lime-400 text-white rounded-lg hover:bg-lime-500 disabled:opacity-50"
               :disabled="!isFormValid"
             >
-              Сохранить
+              Сохранить тренировку
             </button>
           </div>
         </div>
@@ -167,17 +242,32 @@ export default {
         gender: 'Любой',
         goals: [],
         description: '',
+        exercises: [],
       },
     }
   },
   computed: {
     isFormValid() {
       return (
-        this.form.name && this.form.location && this.form.difficulty && this.form.goals.length > 0
+        this.form.name &&
+        this.form.location &&
+        this.form.difficulty &&
+        this.form.goals.length > 0 &&
+        this.form.exercises.length > 0
       )
     },
   },
   methods: {
+    addExercise() {
+      this.form.exercises.push({
+        sets: 3,
+        reps: 12,
+        description: '',
+      })
+    },
+    removeExercise(index) {
+      this.form.exercises.splice(index, 1)
+    },
     submitTraining() {
       if (!this.isFormValid) return
 
@@ -195,6 +285,7 @@ export default {
         gender: 'Любой',
         goals: [],
         description: '',
+        exercises: [],
       }
     },
   },
