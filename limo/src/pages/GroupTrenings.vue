@@ -35,27 +35,11 @@
       </button>
 
       <!-- Кнопка добавить -->
-      <button
-        @click="addTraining"
-        class="flex items-center justify-center gap-2 px-4 py-2 border border-transparent rounded-lg bg-lime-400 text-white hover:bg-lime-500 transition-colors"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-5 w-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 4v16m8-8H4"
-          />
-        </svg>
-        <span class="hidden sm:inline">Добавить</span>
-      </button>
+      <AddTrainingButton @add-training="showAddForm = true" />
     </div>
+
+    <!-- Форма добавления (модальное окно) -->
+    <AddTrainingForm v-if="showAddForm" @submit="handleAddTraining" @cancel="showAddForm = false" />
     <!-- Закрывающий div для flex-контейнера -->
 
     <!-- Аккордеон с фильтрами -->
@@ -91,17 +75,6 @@
         </div>
 
         <!-- Занятий в неделю -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Занятий в неделю</label>
-          <select
-            v-model="selectedSessions"
-            @change="filterTrainings"
-            class="w-full px-3 py-2 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-          >
-            <option value="">Любое количество</option>
-            <option v-for="session in weeklySessions" :value="session">{{ session }}</option>
-          </select>
-        </div>
 
         <!-- Пол -->
         <div>
@@ -145,18 +118,22 @@
 </template>
 
 <script>
+import AddTrainingButton from '@/components/AddTrainingButton.vue'
+import AddTrainingForm from '@/components/AddTrainingForm.vue'
 import TrainingsList from '@/components/TrainingsList.vue'
 export default {
   components: {
+    AddTrainingButton,
+    AddTrainingForm,
     TrainingsList,
   },
   data() {
     return {
+      showAddForm: false,
       searchQuery: '',
       isFiltersOpen: false,
       selectedLocation: '',
       selectedDifficulty: '',
-      selectedSessions: '',
       selectedGender: '',
       selectedGoals: [],
       locations: ['Зал', 'Улица', 'Дома', 'Бассейн', 'Студия'],
@@ -219,33 +196,17 @@ export default {
     this.filteredTrainings = this.trainings
   },
   methods: {
-    filterTrainings() {
-      this.filteredTrainings = this.trainings.filter((training) => {
-        const matchesSearch = training.name.toLowerCase().includes(this.searchQuery.toLowerCase())
-        const matchesLocation = this.selectedLocation
-          ? training.location === this.selectedLocation
-          : true
-        const matchesDifficulty = this.selectedDifficulty
-          ? training.difficulty === this.selectedDifficulty
-          : true
-        const matchesSessions = this.selectedSessions
-          ? training.sessionsPerWeek === this.selectedSessions
-          : true
-        const matchesGender = this.selectedGender ? training.gender === this.selectedGender : true
-        const matchesGoals =
-          this.selectedGoals.length > 0
-            ? this.selectedGoals.some((goal) => training.goals.includes(goal))
-            : true
+    handleAddTraining(newTraining) {
+      try {
+        // Валидация
+        if (!newTraining.name) throw new Error('Укажите название')
 
-        return (
-          matchesSearch &&
-          matchesLocation &&
-          matchesDifficulty &&
-          matchesSessions &&
-          matchesGender &&
-          matchesGoals
-        )
-      })
+        // Добавление
+        this.trainings.unshift({ ...newTraining, id: Date.now() })
+        this.showAddForm = false
+      } catch (error) {
+        console.error('Ошибка добавления:', error)
+      }
     },
   },
 }
