@@ -251,20 +251,13 @@ const addNewRecord = async () => {
       <div v-if="formData.dailyCalories > 0" class="p-4 bg-blue-50 rounded-md">
         <p class="text-sm text-gray-600">Рекомендуемая суточная норма:</p>
         <p class="text-2xl font-bold text-blue-600">{{ formData.dailyCalories }} ккал</p>
-        <p v-if="formData.goal === 'lose'" class="text-xs text-gray-500 mt-1">
-          (Дефицит 500 ккал для плавного похудения)
-        </p>
-        <p v-else-if="formData.goal === 'gain'" class="text-xs text-gray-500 mt-1">
-          (Профицит 500 ккал для набора массы)
-        </p>
-        <p v-else class="text-xs text-gray-500 mt-1">(Поддержание текущего веса)</p>
       </div>
 
       <!-- Кнопка сохранения -->
       <button
         type="submit"
         :disabled="disabledSaveButton || isLoading"
-        class="w-full bg-lime-600 text-white py-2 px-4 rounded-md hover:bg-lime-700 focus:outline-none focus:ring-2 focus:ring-lime-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        class="w-full bg-lime-500 text-white py-2 px-4 rounded-md hover:bg-lime-600 focus:outline-none focus:ring-2 focus:ring-lime-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
         <span v-if="isLoading">
           <svg

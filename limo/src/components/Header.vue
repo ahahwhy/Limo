@@ -1,4 +1,6 @@
-<script setup></script>
+<script setup>
+import router from '@/router'
+</script>
 
 <template>
   <header class="flex justify-between">
@@ -14,7 +16,7 @@
           <router-link :to="{ name: 'Home' }"> Главная </router-link>
         </li>
         <li class="hover:text-lime-400 cursor-pointer">
-          <a>Тренировки</a>
+          <router-link :to="{ name: 'GroupTrenings' }">Тренировки</router-link>
         </li>
         <li class="hover:text-lime-400 cursor-pointer">
           <a>Упражнения</a>
