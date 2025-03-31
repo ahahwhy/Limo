@@ -1,43 +1,25 @@
 <template>
   <div class="container mx-auto px-4 py-8 w-full mt-8">
-    <!-- Строка поиска -->
-    <div class="mb-6">
-      <input
-        type="text"
-        placeholder="Поиск тренировок..."
-        v-model="searchQuery"
-        @input="filterTrainings"
-        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-      />
-    </div>
+    <!-- Строка поиска и фильтров -->
+    <div class="flex gap-3 mb-6">
+      <!-- Поиск -->
+      <div class="flex-1">
+        <input
+          type="text"
+          placeholder="Поиск тренировок..."
+          v-model="searchQuery"
+          @input="filterTrainings"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
 
-    <!-- Фильтры в аккордеоне -->
-    <div class="mb-6 border border-gray-200 rounded-lg overflow-hidden">
       <button
         @click="isFiltersOpen = !isFiltersOpen"
-        class="w-full flex justify-between items-center px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors"
+        class="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-lg bg-lime-400 hover:bg-lime-500 transition-colors"
       >
-        <div class="flex items-center gap-2">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5 text-gray-500"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-            />
-          </svg>
-          <span class="font-medium">Фильтры</span>
-        </div>
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          class="h-5 w-5 text-gray-500 transition-transform"
-          :class="{ 'rotate-180': isFiltersOpen }"
+          class="h-5 w-5 text-white"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -46,74 +28,107 @@
             stroke-linecap="round"
             stroke-linejoin="round"
             stroke-width="2"
-            d="M19 9l-7 7-7-7"
+            d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
           />
         </svg>
+        <span class="hidden sm:inline">Фильтры</span>
       </button>
 
-      <div v-show="isFiltersOpen" class="p-4 bg-white">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <!-- Фильтр по типу -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Тип тренировки</label>
-            <select
-              v-model="selectedType"
-              @change="filterTrainings"
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Все типы</option>
-              <option v-for="type in trainingTypes" :value="type">{{ type }}</option>
-            </select>
-          </div>
+      <!-- Кнопка добавить -->
+      <button
+        @click="addTraining"
+        class="flex items-center justify-center gap-2 px-4 py-2 border border-transparent rounded-lg bg-lime-400 text-white hover:bg-lime-500 transition-colors"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-5 w-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 4v16m8-8H4"
+          />
+        </svg>
+        <span class="hidden sm:inline">Добавить</span>
+      </button>
+    </div>
+    <!-- Закрывающий div для flex-контейнера -->
 
-          <!-- Фильтр по сложности -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Уровень сложности</label>
-            <select
-              v-model="selectedDifficulty"
-              @change="filterTrainings"
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Любой уровень</option>
-              <option v-for="level in difficultyLevels" :value="level">{{ level }}</option>
-            </select>
-          </div>
-
-          <!-- Фильтр по длительности -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1"
-              >Минимальная длительность (мин)</label
-            >
-            <input
-              type="number"
-              v-model="minDuration"
-              @input="filterTrainings"
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+    <!-- Аккордеон с фильтрами -->
+    <div
+      v-if="isFiltersOpen"
+      class="mb-6 border border-gray-300 rounded-lg overflow-hidden bg-gray-50 p-4 shadow-sm"
+    >
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Место проведения -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Место проведения</label>
+          <select
+            v-model="selectedLocation"
+            @change="filterTrainings"
+            class="w-full px-3 py-2 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+          >
+            <option value="">Любое</option>
+            <option v-for="location in locations" :value="location">{{ location }}</option>
+          </select>
         </div>
 
-        <!-- Дополнительные фильтры -->
-        <div class="mt-4 pt-4 border-t border-gray-200">
-          <h4 class="text-sm font-medium text-gray-700 mb-2">Дополнительные параметры</h4>
-          <div class="flex flex-wrap gap-4">
-            <label class="flex items-center gap-2">
+        <!-- Уровень подготовки -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Уровень подготовки</label>
+          <select
+            v-model="selectedDifficulty"
+            @change="filterTrainings"
+            class="w-full px-3 py-2 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+          >
+            <option value="">Любой</option>
+            <option v-for="level in difficultyLevels" :value="level">{{ level }}</option>
+          </select>
+        </div>
+
+        <!-- Занятий в неделю -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Занятий в неделю</label>
+          <select
+            v-model="selectedSessions"
+            @change="filterTrainings"
+            class="w-full px-3 py-2 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+          >
+            <option value="">Любое количество</option>
+            <option v-for="session in weeklySessions" :value="session">{{ session }}</option>
+          </select>
+        </div>
+
+        <!-- Пол -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Пол</label>
+          <select
+            v-model="selectedGender"
+            @change="filterTrainings"
+            class="w-full px-3 py-2 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+          >
+            <option value="">Любой</option>
+            <option v-for="gender in genders" :value="gender">{{ gender }}</option>
+          </select>
+        </div>
+
+        <!-- Цель тренировки -->
+        <div class="md:col-span-2 lg:col-span-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Цель тренировки</label>
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+            <label v-for="goal in trainingGoals" class="flex items-center gap-2">
               <input
                 type="checkbox"
-                v-model="onlyPopular"
+                :value="goal"
+                v-model="selectedGoals"
                 @change="filterTrainings"
-                class="rounded text-blue-500 focus:ring-blue-500"
+                class="rounded text-blue-500 focus:ring-blue-500 h-4 w-4"
               />
-              <span class="text-sm">Только популярные</span>
-            </label>
-            <label class="flex items-center gap-2">
-              <input
-                type="checkbox"
-                v-model="onlyNew"
-                @change="filterTrainings"
-                class="rounded text-blue-500 focus:ring-blue-500"
-              />
-              <span class="text-sm">Только новые</span>
+              <span class="text-sm">{{ goal }}</span>
             </label>
           </div>
         </div>
@@ -121,79 +136,80 @@
     </div>
 
     <!-- Список тренировок -->
-    <div class="grid gap-4">
-      <div
-        v-for="training in filteredTrainings"
-        :key="training.id"
-        class="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
-      >
-        <h3 class="text-xl font-semibold mb-2">{{ training.name }}</h3>
-        <p class="text-gray-600"><span class="font-medium">Тип:</span> {{ training.type }}</p>
-        <p class="text-gray-600">
-          <span class="font-medium">Сложность:</span> {{ training.difficulty }}
-        </p>
-        <p class="text-gray-600">
-          <span class="font-medium">Длительность:</span> {{ training.duration }} мин
-        </p>
-        <div class="mt-2 flex gap-2">
-          <span
-            v-if="training.isPopular"
-            class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"
-          >
-            Популярная
-          </span>
-          <span
-            v-if="training.isNew"
-            class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800"
-          >
-            Новая
-          </span>
-        </div>
-      </div>
-    </div>
+    <TrainingsList
+      :trainings="filteredTrainings"
+      :search-query="searchQuery"
+      @reset-filters="resetFilters"
+    />
   </div>
 </template>
 
 <script>
+import TrainingsList from '@/components/TrainingsList.vue'
 export default {
+  components: {
+    TrainingsList,
+  },
   data() {
     return {
       searchQuery: '',
-      selectedType: '',
-      selectedDifficulty: '',
-      minDuration: null,
-      onlyPopular: false,
-      onlyNew: false,
       isFiltersOpen: false,
-      trainingTypes: ['Силовая', 'Кардио', 'Йога', 'Кроссфит'],
+      selectedLocation: '',
+      selectedDifficulty: '',
+      selectedSessions: '',
+      selectedGender: '',
+      selectedGoals: [],
+      locations: ['Зал', 'Улица', 'Дома', 'Бассейн', 'Студия'],
       difficultyLevels: ['Начинающий', 'Средний', 'Продвинутый'],
+      weeklySessions: ['1-2', '3-4', '5+'],
+      genders: ['Мужской', 'Женский', 'Смешанный'],
+      trainingGoals: [
+        'Похудение',
+        'Рельеф',
+        'Масса и сила',
+        'Йога',
+        'Танцы',
+        'Растяжка',
+        'Для детей',
+        'Кардио',
+        'Реабилитация',
+      ],
       trainings: [
         {
           id: 1,
           name: 'Интервальный бег',
-          type: 'Кардио',
+          location: 'Улица',
           difficulty: 'Средний',
-          duration: 30,
-          isPopular: true,
-          isNew: false,
+          sessionsPerWeek: '3-4',
+          gender: 'Смешанный',
+          goals: ['Похудение', 'Кардио'],
         },
         {
           id: 2,
-          name: 'Йога для начинающих',
-          type: 'Йога',
-          difficulty: 'Начинающий',
-          duration: 45,
-          isPopular: false,
-          isNew: true,
+          name: 'Силовая тренировка',
+          location: 'Зал',
+          difficulty: 'Продвинутый',
+          sessionsPerWeek: '5+',
+          gender: 'Мужской',
+          goals: ['Масса и сила', 'Рельеф'],
         },
         {
           id: 3,
-          name: 'Тяжелая атлетика',
-          type: 'Силовая',
-          difficulty: 'Продвинутый',
-          duration: 60,
-          isPopular: true,
-          isNew: true,
+          name: 'Йога для начинающих',
+          location: 'Студия',
+          difficulty: 'Начинающий',
+          sessionsPerWeek: '1-2',
+          gender: 'Женский',
+          goals: ['Йога', 'Растяжка'],
+        },
+        {
+          id: 4,
+          name: 'Детская гимнастика',
+          location: 'Зал',
+          difficulty: 'Начинающий',
+          sessionsPerWeek: '3-4',
+          gender: 'Смешанный',
+          goals: ['Для детей', 'Растяжка'],
         },
       ],
       filteredTrainings: [],
@@ -206,21 +222,28 @@ export default {
     filterTrainings() {
       this.filteredTrainings = this.trainings.filter((training) => {
         const matchesSearch = training.name.toLowerCase().includes(this.searchQuery.toLowerCase())
-        const matchesType = this.selectedType ? training.type === this.selectedType : true
+        const matchesLocation = this.selectedLocation
+          ? training.location === this.selectedLocation
+          : true
         const matchesDifficulty = this.selectedDifficulty
           ? training.difficulty === this.selectedDifficulty
           : true
-        const matchesDuration = this.minDuration ? training.duration >= this.minDuration : true
-        const matchesPopular = this.onlyPopular ? training.isPopular : true
-        const matchesNew = this.onlyNew ? training.isNew : true
+        const matchesSessions = this.selectedSessions
+          ? training.sessionsPerWeek === this.selectedSessions
+          : true
+        const matchesGender = this.selectedGender ? training.gender === this.selectedGender : true
+        const matchesGoals =
+          this.selectedGoals.length > 0
+            ? this.selectedGoals.some((goal) => training.goals.includes(goal))
+            : true
 
         return (
           matchesSearch &&
-          matchesType &&
+          matchesLocation &&
           matchesDifficulty &&
-          matchesDuration &&
-          matchesPopular &&
-          matchesNew
+          matchesSessions &&
+          matchesGender &&
+          matchesGoals
         )
       })
     },
