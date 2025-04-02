@@ -9,7 +9,7 @@
         <h3 class="text-xl font-semibold mb-2">{{ training.name }}</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
           <p class="text-gray-600">
-            <span class="font-medium">Место:</span> {{ training.location }}
+            <span class="font-medium">Уровень сложности:</span> {{ training.difficulty }}
           </p>
           <!-- Остальные поля тренировки -->
         </div>

@@ -71,7 +71,15 @@ const handleSubmit = async () => {
   isLoading.value = true
   try {
     await signInWithEmailAndPassword(getAuth(), email.value, password.value)
-    router.push({ name: 'Account' })
+
+    // Проверка на администратора
+    if (email.value === 'admin@admin.ru' && password.value === 'admin12345') {
+      // Перенаправление в админ-панель
+      router.push({ name: 'AdminAccount' })
+    } else {
+      // Перенаправление обычного пользователя
+      router.push({ name: 'Account' })
+    }
   } catch (error) {
     alert(error.message)
   } finally {

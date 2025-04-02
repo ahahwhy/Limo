@@ -1,5 +1,27 @@
 <script setup>
-import router from '@/router'
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { getAuth, onAuthStateChanged } from 'firebase/auth'
+
+const router = useRouter()
+const isAuthenticated = ref(false)
+
+// Проверяем статус авторизации
+onMounted(() => {
+  const auth = getAuth()
+  onAuthStateChanged(auth, (user) => {
+    isAuthenticated.value = !!user
+  })
+})
+
+// Функция для проверки авторизации перед переходом
+const navigateWithAuthCheck = (routeName) => {
+  if (isAuthenticated.value) {
+    router.push({ name: routeName })
+  } else {
+    router.push({ name: 'Autorization' })
+  }
+}
 </script>
 
 <template>
@@ -15,20 +37,24 @@ import router from '@/router'
         <li class="hover:text-lime-400 cursor-pointer">
           <router-link :to="{ name: 'Home' }"> Главная </router-link>
         </li>
-        <li class="hover:text-lime-400 cursor-pointer">
-          <router-link :to="{ name: 'GroupTrenings' }">Тренировки</router-link>
+        <li
+          class="hover:text-lime-400 cursor-pointer"
+          @click="navigateWithAuthCheck('GroupTrenings')"
+        >
+          <a>Тренировки</a>
         </li>
         <li class="hover:text-lime-400 cursor-pointer">
           <a>Упражнения</a>
         </li>
-        <li class="hover:text-lime-400 cursor-pointer">
-          <RouterLink :to="{ name: 'Calculate' }">Калькулятор калорий</RouterLink>
+        <li class="hover:text-lime-400 cursor-pointer" @click="navigateWithAuthCheck('Calculate')">
+          <a>Калькулятор калорий</a>
         </li>
 
         <li
           class="flex items-center gap-1 border border-black rounded-lg p-1 hover:text-lime-400 cursor-pointer"
+          @click="navigateWithAuthCheck('Account')"
         >
-          <router-link :to="{ name: 'Autorization' }"> Личный кабинет </router-link>
+          <a>Личный кабинет</a>
           <img src="/account.svg" alt="Account" class="w-6" />
         </li>
       </ul>

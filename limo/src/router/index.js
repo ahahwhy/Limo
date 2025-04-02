@@ -5,6 +5,7 @@ import Autorization from '../pages/Autorization.vue'
 import Registration from '@/pages/Registration.vue'
 import Account from '../pages/Account.vue'
 import Calculate from '@/pages/Calculate.vue'
+import AdminAccount from '@/pages/AdminAccount.vue'
 
 const routes = [
   {
@@ -22,7 +23,6 @@ const routes = [
     name: 'Autorization',
     component: Autorization,
   },
-
   {
     path: '/registration',
     name: 'Registration',
@@ -33,11 +33,16 @@ const routes = [
     name: 'Calculate',
     component: Calculate,
   },
-
   {
     path: '/account',
     name: 'Account',
     component: Account,
+    meta: { showHeader: false },
+  },
+  {
+    path: '/adminAccount',
+    name: 'AdminAccount',
+    component: AdminAccount,
     meta: { showHeader: false },
   },
 ]
