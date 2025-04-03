@@ -29,8 +29,6 @@
               <option value="Дома">Дома</option>
               <option value="В зале">В зале</option>
               <option value="На улице">На улице</option>
-              <option value="В студии">В студии</option>
-              <option value="В бассейне">В бассейне</option>
             </select>
           </div>
 
@@ -141,8 +139,31 @@
             <div
               v-for="(exercise, index) in form.exercises"
               :key="index"
-              class="mb-4 p-3 border border-gray-200 rounded-lg"
+              class="mb-4 p-3 border border-gray-200 rounded-lg relative"
             >
+              <!-- Кнопка удаления - теперь внутри div для каждого упражнения -->
+              <button
+                type="button"
+                @click="removeExercise(index)"
+                class="absolute top-2 right-2 text-red-500 hover:text-red-700"
+                title="Удалить упражнение"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  />
+                </svg>
+              </button>
+
               <div class="grid grid-cols-12 gap-3 mb-3">
                 <!-- Подходы x Повторения -->
                 <div class="col-span-4">
@@ -168,6 +189,18 @@
                       placeholder="12"
                     />
                   </div>
+                </div>
+                <div class="col-span-12 mb-2">
+                  <label class="block text-sm font-medium text-gray-700 mb-1"
+                    >Название упражнения</label
+                  >
+                  <input
+                    v-model="exercise.name"
+                    type="text"
+                    required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    placeholder="Название упражнения"
+                  />
                 </div>
 
                 <!-- Описание упражнения -->
@@ -231,63 +264,118 @@
   </div>
 </template>
 
-<script>
-export default {
-  data() {
-    return {
-      form: {
-        name: '',
-        location: '',
-        difficulty: '',
-        gender: 'Любой',
-        goals: [],
-        description: '',
-        exercises: [],
-      },
-    }
-  },
-  computed: {
-    isFormValid() {
-      return (
-        this.form.name &&
-        this.form.location &&
-        this.form.difficulty &&
-        this.form.goals.length > 0 &&
-        this.form.exercises.length > 0
-      )
-    },
-  },
-  methods: {
-    addExercise() {
-      this.form.exercises.push({
-        sets: 3,
-        reps: 12,
-        description: '',
-      })
-    },
-    removeExercise(index) {
-      this.form.exercises.splice(index, 1)
-    },
-    submitTraining() {
-      if (!this.isFormValid) return
+<script setup>
+import { ref, computed } from 'vue' // Добавьте computed
+import { doc, setDoc, serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore'
+import { getAuth } from 'firebase/auth'
+import { db } from '@/firebase'
 
-      this.$emit('submit', {
-        ...this.form,
-        id: Date.now(),
-        sessionsPerWeek: '1-2', // Можно добавить поле для выбора
-      })
+const emit = defineEmits(['submit', 'cancel'])
 
-      // Сброс формы
-      this.form = {
-        name: '',
-        location: '',
-        difficulty: '',
-        gender: 'Любой',
-        goals: [],
-        description: '',
-        exercises: [],
-      }
+const form = ref({
+  name: '',
+  location: '',
+  difficulty: '',
+  gender: 'Любой',
+  goals: [],
+  description: '',
+  exercises: [
+    {
+      name: '',
+      sets: 3,
+      reps: 12,
+      description: '',
     },
-  },
+  ],
+})
+
+const isLoading = ref(false)
+const error = ref(null)
+
+const addExercise = () => {
+  form.value.exercises.push({
+    name: '',
+    sets: 3,
+    reps: 12,
+    description: '',
+  })
 }
+
+const removeExercise = (index) => {
+  form.value.exercises.splice(index, 1)
+}
+
+const validateForm = () => {
+  if (!form.value.name.trim()) throw new Error('Введите название тренировки')
+  if (!form.value.location) throw new Error('Выберите место проведения')
+  if (!form.value.difficulty) throw new Error('Выберите уровень сложности')
+  if (form.value.goals.length === 0) throw new Error('Выберите хотя бы одну цель')
+  if (form.value.exercises.some((ex) => !ex.name.trim() || !ex.description.trim())) {
+    throw new Error('Заполните все поля упражнений')
+  }
+}
+
+const submitTraining = async () => {
+  try {
+    isLoading.value = true
+    error.value = null
+
+    validateForm()
+
+    const auth = getAuth()
+    const user = auth.currentUser
+    if (!user) throw new Error('Требуется авторизация')
+
+    // Проверка дубликатов
+    const trainingsRef = collection(db, 'trainings')
+    const q = query(trainingsRef, where('name', '==', form.value.name))
+    const snapshot = await getDocs(q)
+    if (!snapshot.empty) throw new Error('Тренировка с таким названием уже существует')
+
+    // Подготовка данных
+    const trainingData = {
+      name: form.value.name.trim(),
+      location: form.value.location,
+      difficulty: form.value.difficulty,
+      gender: form.value.gender,
+      goals: form.value.goals,
+      description: form.value.description.trim(),
+      exercises: form.value.exercises.map((ex) => ({
+        name: ex.name.trim(),
+        sets: ex.sets,
+        reps: ex.reps,
+        description: ex.description.trim(),
+      })),
+      createdAt: serverTimestamp(),
+      userId: user.uid,
+      lastUpdated: serverTimestamp(),
+    }
+
+    // Сохранение в Firestore
+    const newTrainingRef = doc(collection(db, 'trainings'))
+    await setDoc(newTrainingRef, trainingData)
+
+    // Возвращаем данные в родительский компонент
+    emit('submit', { id: newTrainingRef.id, ...trainingData })
+    emit('cancel')
+  } catch (err) {
+    console.error('Ошибка сохранения:', err)
+    error.value = err.message
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const isFormValid = computed(() => {
+  return (
+    form.value.name.trim() &&
+    form.value.location &&
+    form.value.difficulty &&
+    form.value.goals.length > 0 &&
+    form.value.exercises.length > 0 &&
+    form.value.exercises.every(
+      (ex) => ex.name.trim() && ex.description.trim() && ex.sets > 0 && ex.reps > 0,
+    )
+  )
+})
 </script>

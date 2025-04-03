@@ -118,15 +118,13 @@
 </template>
 
 <script>
+import { getFirestore, collection, getDocs, query, orderBy } from 'firebase/firestore'
 import AddTrainingButton from '@/components/AddTrainingButton.vue'
 import AddTrainingForm from '@/components/AddTrainingForm.vue'
 import TrainingsList from '@/components/TrainingsList.vue'
+
 export default {
-  components: {
-    AddTrainingButton,
-    AddTrainingForm,
-    TrainingsList,
-  },
+  components: { AddTrainingButton, AddTrainingForm, TrainingsList },
   data() {
     return {
       showAddForm: false,
@@ -136,9 +134,8 @@ export default {
       selectedDifficulty: '',
       selectedGender: '',
       selectedGoals: [],
-      locations: ['Зал', 'Улица', 'Дома', 'Бассейн', 'Студия'],
+      locations: ['В зале', 'На улице', 'Дома', 'Бассейн', 'Студия'],
       difficultyLevels: ['Начинающий', 'Средний', 'Продвинутый'],
-      weeklySessions: ['1-2', '3-4', '5+'],
       genders: ['Мужской', 'Женский', 'Смешанный'],
       trainingGoals: [
         'Похудение',
@@ -151,62 +148,74 @@ export default {
         'Кардио',
         'Реабилитация',
       ],
-      trainings: [
-        {
-          id: 1,
-          name: 'Интервальный бег',
-          location: 'Улица',
-          difficulty: 'Средний',
-          sessionsPerWeek: '3-4',
-          gender: 'Смешанный',
-          goals: ['Похудение', 'Кардио'],
-        },
-        {
-          id: 2,
-          name: 'Силовая тренировка',
-          location: 'Зал',
-          difficulty: 'Продвинутый',
-          sessionsPerWeek: '5+',
-          gender: 'Мужской',
-          goals: ['Масса и сила', 'Рельеф'],
-        },
-        {
-          id: 3,
-          name: 'Йога для начинающих',
-          location: 'Студия',
-          difficulty: 'Начинающий',
-          sessionsPerWeek: '1-2',
-          gender: 'Женский',
-          goals: ['Йога', 'Растяжка'],
-        },
-        {
-          id: 4,
-          name: 'Детская гимнастика',
-          location: 'Зал',
-          difficulty: 'Начинающий',
-          sessionsPerWeek: '3-4',
-          gender: 'Смешанный',
-          goals: ['Для детей', 'Растяжка'],
-        },
-      ],
+      trainings: [],
       filteredTrainings: [],
+      isLoading: false,
     }
   },
-  created() {
-    this.filteredTrainings = this.trainings
+  async created() {
+    await this.loadTrainings()
   },
   methods: {
-    handleAddTraining(newTraining) {
+    async loadTrainings() {
       try {
-        // Валидация
-        if (!newTraining.name) throw new Error('Укажите название')
+        this.isLoading = true
+        const db = getFirestore()
+        const q = query(collection(db, 'trainings'), orderBy('createdAt', 'desc'))
+        const querySnapshot = await getDocs(q)
 
-        // Добавление
-        this.trainings.unshift({ ...newTraining, id: Date.now() })
+        this.trainings = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }))
+        this.filteredTrainings = [...this.trainings]
+      } catch (error) {
+        console.error('Ошибка загрузки:', error)
+      } finally {
+        this.isLoading = false
+      }
+    },
+    async handleAddTraining(newTraining) {
+      try {
+        // Добавляем в локальное состояние без повторной загрузки
+        this.trainings.unshift(newTraining)
+        this.filteredTrainings.unshift(newTraining)
         this.showAddForm = false
+
+        // Вместо полной перезагрузки можно обновить только добавленную тренировку
+        // await this.loadTrainings() // Убрать эту строку
       } catch (error) {
         console.error('Ошибка добавления:', error)
+        throw error
       }
+    },
+
+    filterTrainings() {
+      this.filteredTrainings = this.trainings.filter((training) => {
+        const matchesSearch = training.name.toLowerCase().includes(this.searchQuery.toLowerCase())
+        const matchesLocation = this.selectedLocation
+          ? training.location === this.selectedLocation
+          : true
+        const matchesDifficulty = this.selectedDifficulty
+          ? training.difficulty === this.selectedDifficulty
+          : true
+        const matchesGender = this.selectedGender ? training.gender === this.selectedGender : true
+        const matchesGoals =
+          this.selectedGoals.length > 0
+            ? this.selectedGoals.some((goal) => training.goals.includes(goal))
+            : true
+
+        return (
+          matchesSearch && matchesLocation && matchesDifficulty && matchesGender && matchesGoals
+        )
+      })
+    },
+    resetFilters() {
+      this.selectedLocation = ''
+      this.selectedDifficulty = ''
+      this.selectedGender = ''
+      this.selectedGoals = []
+      this.filterTrainings()
     },
   },
 }
