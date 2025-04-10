@@ -1,16 +1,29 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { doc, setDoc, serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore'
-import { getAuth } from 'firebase/auth'
+import { getAuth, onAuthStateChanged } from 'firebase/auth'
 import { db } from '@/firebase'
 
+const auth = getAuth()
+const user = ref(null)
+
+onMounted(() => {
+  onAuthStateChanged(auth, (authUser) => {
+    user.value = authUser
+    if (authUser) {
+      formData.value.userId = authUser.uid
+    }
+  })
+})
+
 const formData = ref({
+  userId: '',
   age: '',
   weight: '',
   height: '',
   gender: '',
   activityLevel: '',
-  goal: 'maintain', // По умолчанию - поддержание веса
+  goal: 'maintain',
   dailyCalories: 0,
   createdAt: null,
 })
@@ -75,53 +88,27 @@ const calculateCalories = () => {
   return calories
 }
 
-// Проверка на существующую запись с такими же данными
-const checkForDuplicate = async (userId) => {
-  const q = query(
-    collection(db, 'users', userId, 'caloriesRecords'),
-    where('age', '==', parseFloat(formData.value.age)),
-    where('weight', '==', parseFloat(formData.value.weight)),
-    where('height', '==', parseFloat(formData.value.height)),
-    where('gender', '==', formData.value.gender),
-    where('activityLevel', '==', parseFloat(formData.value.activityLevel)),
-    where('goal', '==', formData.value.goal),
-  )
-
-  const querySnapshot = await getDocs(q)
-  return !querySnapshot.empty
-}
-
 const addNewRecord = async () => {
+  if (!user.value) {
+    error.value = 'Для сохранения данных необходимо войти в систему'
+    return
+  }
+
   try {
     isLoading.value = true
     error.value = ''
     successMessage.value = ''
 
-    // Рассчитываем калории с учетом цели
+    // Рассчитываем калории
     formData.value.dailyCalories = calculateCalories()
-    formData.value.createdAt = serverTimestamp()
-
-    if (formData.value.dailyCalories <= 0) {
-      throw new Error('Некорректные данные для расчета')
-    }
-
-    const auth = getAuth()
-    const user = auth.currentUser
-
-    if (!user) {
-      throw new Error('Требуется авторизация')
-    }
-
-    // Проверяем на дубликат (теперь включая цель)
-    const isDuplicate = await checkForDuplicate(user.uid)
-    if (isDuplicate) {
-      throw new Error('Запись с такими данными уже существует')
-    }
 
     // Сохраняем в Firestore
-    await setDoc(doc(db, 'users', user.uid, 'caloriesRecords', Date.now().toString()), {
+    const recordId = Date.now().toString()
+    await setDoc(doc(db, 'users', user.value.uid, 'caloriesRecords', recordId), {
       ...formData.value,
-      userId: user.uid,
+      userId: user.value.uid,
+      calculatedAt: serverTimestamp(),
+      displayDate: new Date().toLocaleDateString('ru-RU'),
     })
 
     successMessage.value = 'Данные успешно сохранены!'
@@ -136,7 +123,11 @@ const addNewRecord = async () => {
 </script>
 
 <template>
-  <div class="max-w-md mx-auto p-6 bg-gray-100 rounded-lg shadow-md mt-24 mb-24">
+  <div v-if="!user">
+    <p class="text-red-500">Для сохранения данных необходимо войти в систему</p>
+    <router-link to="/autorization" class="text-blue-500">Войти</router-link>
+  </div>
+  <div v-else class="max-w-md mx-auto p-6 bg-gray-100 rounded-lg shadow-md mt-24 mb-24">
     <h1 class="text-2xl font-bold text-gray-800 mb-6">Калькулятор калорий</h1>
 
     <!-- Сообщения об ошибках/успехе -->
@@ -147,7 +138,7 @@ const addNewRecord = async () => {
       {{ successMessage }}
     </div>
 
-    <form @submit.prevent="addNewRecord" class="space-y-4">
+    <form v-else @submit.prevent="addNewRecord" class="space-y-4">
       <!-- Возраст -->
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Возраст (лет)</label>
