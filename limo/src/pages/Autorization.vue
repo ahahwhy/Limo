@@ -2,7 +2,7 @@
   <div class="flex justify-between mb-32">
     <div class="w-1/2 mt-32 ml-12 bg-gray-100 text-xl shadow-xl rounded-xl">
       <h1 class="text-3xl pt-16 text-center">Авторизация</h1>
-      <form @submit.prevent="handleSubmit" class="ml-20 mt-16">
+      <form @submit.prevent="login" class="ml-20 mt-16">
         <div class="mt-4">
           <label for="email" class="block text-medium text-gray-700 px-1">Email</label>
           <input
@@ -26,6 +26,10 @@
             placeholder="Введите пароль"
             required
           />
+        </div>
+
+        <div v-if="error" class="text-red-500 text-sm mt-2 ml-4">
+          {{ error }}
         </div>
 
         <div class="flex justify-center pe-24 mt-8">
@@ -57,33 +61,45 @@
   </div>
 </template>
 
-<script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { getAuth, signInWithEmailAndPassword } from 'firebase/auth'
+<script>
+import { signInWithEmailAndPassword } from 'firebase/auth'
+import { auth } from '../firebase'
+import { isAdmin } from '../services/auth'
 
-const router = useRouter()
-const email = ref('')
-const password = ref('')
-const isLoading = ref(false)
-
-const handleSubmit = async () => {
-  isLoading.value = true
-  try {
-    await signInWithEmailAndPassword(getAuth(), email.value, password.value)
-
-    // Проверка на администратора
-    if (email.value === 'admin@admin.ru' && password.value === 'admin12345') {
-      // Перенаправление в админ-панель
-      router.push({ name: 'AdminAccount' })
-    } else {
-      // Перенаправление обычного пользователя
-      router.push({ name: 'Account' })
+export default {
+  name: 'Login',
+  data() {
+    return {
+      email: '',
+      password: '',
+      isLoading: false,
+      error: null,
     }
-  } catch (error) {
-    alert(error.message)
-  } finally {
-    isLoading.value = false
-  }
+  },
+  methods: {
+    async login() {
+      this.isLoading = true
+      this.error = null
+
+      try {
+        await signInWithEmailAndPassword(auth, this.email, this.password)
+
+        // Проверка прав администратора после успешного входа
+        const adminStatus = await isAdmin()
+        if (adminStatus) {
+          console.log('Вы администратор!')
+          this.$router.push('/adminAccount')
+        } else {
+          console.log('Обычный пользователь')
+          this.$router.push('/account')
+        }
+      } catch (error) {
+        this.error = error.message
+        console.error('Ошибка авторизации:', error)
+      } finally {
+        this.isLoading = false
+      }
+    },
+  },
 }
 </script>

@@ -13,6 +13,7 @@
         />
       </div>
 
+      <!-- Кнопка фильтров -->
       <button
         @click="isFiltersOpen = !isFiltersOpen"
         class="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-lg bg-lime-400 hover:bg-lime-500 transition-colors"
@@ -38,11 +39,10 @@
       <AddTrainingButton @add-training="showAddForm = true" />
     </div>
 
-    <!-- Форма добавления (модальное окно) -->
+    <!-- Форма добавления -->
     <AddTrainingForm v-if="showAddForm" @submit="handleAddTraining" @cancel="showAddForm = false" />
-    <!-- Закрывающий div для flex-контейнера -->
 
-    <!-- Аккордеон с фильтрами -->
+    <!-- Фильтры -->
     <div
       v-if="isFiltersOpen"
       class="mb-6 border border-gray-300 rounded-lg overflow-hidden bg-gray-50 p-4 shadow-sm"
@@ -73,8 +73,6 @@
             <option v-for="level in difficultyLevels" :value="level">{{ level }}</option>
           </select>
         </div>
-
-        <!-- Занятий в неделю -->
 
         <!-- Пол -->
         <div>
@@ -112,13 +110,25 @@
     <TrainingsList
       :trainings="filteredTrainings"
       :search-query="searchQuery"
+      :is-admin="isAdmin"
+      @delete-training="handleDeleteTraining"
       @reset-filters="resetFilters"
     />
   </div>
 </template>
 
 <script>
-import { getFirestore, collection, getDocs, query, orderBy } from 'firebase/firestore'
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  query,
+  orderBy,
+  doc,
+  deleteDoc,
+} from 'firebase/firestore'
+import { getAuth } from 'firebase/auth'
+import { getDoc } from 'firebase/firestore'
 import AddTrainingButton from '@/components/AddTrainingButton.vue'
 import AddTrainingForm from '@/components/AddTrainingForm.vue'
 import TrainingsList from '@/components/TrainingsList.vue'
@@ -130,6 +140,7 @@ export default {
       showAddForm: false,
       searchQuery: '',
       isFiltersOpen: false,
+      isAdmin: false,
       selectedLocation: '',
       selectedDifficulty: '',
       selectedGender: '',
@@ -154,9 +165,35 @@ export default {
     }
   },
   async created() {
+    await this.checkAdminStatus()
     await this.loadTrainings()
   },
   methods: {
+    async checkAdminStatus() {
+      const auth = getAuth()
+      const user = auth.currentUser
+      if (user) {
+        const db = getFirestore()
+        const userDoc = await getDoc(doc(db, 'users', user.uid))
+        this.isAdmin = userDoc.data()?.role === 'admin'
+      }
+    },
+
+    async handleDeleteTraining(trainingId) {
+      if (!confirm('Вы уверены, что хотите удалить эту тренировку?')) return
+
+      try {
+        const db = getFirestore()
+        await deleteDoc(doc(db, 'trainings', trainingId))
+        this.trainings = this.trainings.filter((t) => t.id !== trainingId)
+        this.filteredTrainings = this.filteredTrainings.filter((t) => t.id !== trainingId)
+        alert('Тренировка успешно удалена')
+      } catch (error) {
+        console.error('Ошибка удаления:', error)
+        alert('Не удалось удалить тренировку: ' + error.message)
+      }
+    },
+
     async loadTrainings() {
       try {
         this.isLoading = true
@@ -175,15 +212,12 @@ export default {
         this.isLoading = false
       }
     },
+
     async handleAddTraining(newTraining) {
       try {
-        // Добавляем в локальное состояние без повторной загрузки
         this.trainings.unshift(newTraining)
         this.filteredTrainings.unshift(newTraining)
         this.showAddForm = false
-
-        // Вместо полной перезагрузки можно обновить только добавленную тренировку
-        // await this.loadTrainings() // Убрать эту строку
       } catch (error) {
         console.error('Ошибка добавления:', error)
         throw error
@@ -210,6 +244,7 @@ export default {
         )
       })
     },
+
     resetFilters() {
       this.selectedLocation = ''
       this.selectedDifficulty = ''

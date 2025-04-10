@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { doc, setDoc, serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore'
 import { getAuth } from 'firebase/auth'
 import { db } from '@/firebase'
@@ -14,6 +14,8 @@ const formData = ref({
   dailyCalories: 0,
   createdAt: null,
 })
+
+//const showAdminFeatures = computed(() => authStore.isAdmin)
 
 const isLoading = ref(false)
 const error = ref('')

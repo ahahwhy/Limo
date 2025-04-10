@@ -2,7 +2,7 @@
   <div class="flex justify-between mb-32">
     <div class="w-1/2 mt-32 ml-12 bg-gray-100 text-xl shadow-xl rounded-xl">
       <h1 class="text-3xl pt-12 text-center">Регистрация</h1>
-      <form @submit.prevent="handleSubmit" class="ml-20 mt-4">
+      <form @submit.prevent="register" class="ml-20 mt-4">
         <div class="mt-4">
           <label for="email" class="block text-medium text-gray-700 px-2">Email</label>
           <input
@@ -43,6 +43,10 @@
           />
         </div>
 
+        <div v-if="error" class="text-red-500 text-sm mt-2 ml-4">
+          {{ error }}
+        </div>
+
         <div class="flex justify-center pe-24 mt-16">
           <button
             type="submit"
@@ -72,31 +76,60 @@
   </div>
 </template>
 
-<script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth'
+<script>
+import { createUserWithEmailAndPassword } from 'firebase/auth'
+import { auth, db } from '../firebase'
+import { doc, setDoc } from 'firebase/firestore'
 
-const router = useRouter()
-const email = ref('')
-const password = ref('')
-const confirmPassword = ref('')
-const isLoading = ref(false)
+export default {
+  name: 'Register',
+  data() {
+    return {
+      email: '',
+      password: '',
+      confirmPassword: '',
+      isLoading: false,
+      error: null,
+    }
+  },
+  methods: {
+    async register() {
+      // Валидация паролей
+      if (this.password !== this.confirmPassword) {
+        this.error = 'Пароли не совпадают'
+        return
+      }
 
-const handleSubmit = async () => {
-  if (password.value !== confirmPassword.value) {
-    alert('Пароли не совпадают')
-    return
-  }
+      this.isLoading = true
+      this.error = null
 
-  isLoading.value = true
-  try {
-    await createUserWithEmailAndPassword(getAuth(), email.value, password.value)
-    router.push({ name: 'Account' })
-  } catch (error) {
-    alert(error.message)
-  } finally {
-    isLoading.value = false
-  }
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, this.email, this.password)
+
+        // Создание документа пользователя в Firestore
+        await setDoc(doc(db, 'users', userCredential.user.uid), {
+          email: this.email,
+          role: 'user',
+          createdAt: new Date(),
+        })
+
+        this.$router.push('/')
+      } catch (error) {
+        this.error = this.getErrorMessage(error.code)
+        console.error('Ошибка регистрации:', error)
+      } finally {
+        this.isLoading = false
+      }
+    },
+    getErrorMessage(errorCode) {
+      const messages = {
+        'auth/email-already-in-use': 'Этот email уже зарегистрирован',
+        'auth/invalid-email': 'Неверный формат email',
+        'auth/weak-password': 'Пароль должен содержать минимум 6 символов',
+        'auth/network-request-failed': 'Ошибка сети. Проверьте подключение к интернету',
+      }
+      return messages[errorCode] || 'Произошла ошибка при регистрации'
+    },
+  },
 }
 </script>

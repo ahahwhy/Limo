@@ -1,55 +1,65 @@
 import { createWebHistory, createRouter } from 'vue-router'
-import Home from '../pages/Home.vue'
-import GroupTrenings from '../pages/GroupTrenings.vue'
-import Autorization from '../pages/Autorization.vue'
-import Registration from '@/pages/Registration.vue'
-import Account from '../pages/Account.vue'
-import Calculate from '@/pages/Calculate.vue'
-import AdminAccount from '@/pages/AdminAccount.vue'
+import { auth } from '../firebase' // Добавленный импорт
+import { isAdmin } from '../services/auth'
 
 const routes = [
   {
     path: '/',
     name: 'Home',
-    component: Home,
-  },
-  {
-    path: '/groupTrenings',
-    name: 'GroupTrenings',
-    component: GroupTrenings,
+    component: () => import('@/pages/Home.vue'),
   },
   {
     path: '/autorization',
     name: 'Autorization',
-    component: Autorization,
+    component: () => import('@/pages/Autorization.vue'),
+  },
+  {
+    path: '/group-trainings', // Рекомендую использовать kebab-case в URL
+    name: 'GroupTrenings', // Но name может оставаться в camelCase
+    component: () => import('@/pages/GroupTrenings.vue'),
+    meta: { requiresAuth: true },
   },
   {
     path: '/registration',
     name: 'Registration',
-    component: Registration,
+    component: () => import('@/pages/Registration.vue'),
   },
   {
     path: '/calculate',
     name: 'Calculate',
-    component: Calculate,
+    component: () => import('@/pages/Calculate.vue'),
   },
   {
     path: '/account',
     name: 'Account',
-    component: Account,
-    meta: { showHeader: false },
+    component: () => import('@/pages/Account.vue'),
+    meta: { requiresAuth: true },
   },
   {
     path: '/adminAccount',
     name: 'AdminAccount',
-    component: AdminAccount,
-    meta: { showHeader: false },
+    component: () => import('@/pages/AdminAccount.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true },
   },
 ]
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(import.meta.env.VITE_BASE_URL),
   routes,
+})
+
+router.beforeEach(async (to, from, next) => {
+  const requiresAuth = to.matched.some((record) => record.meta.requiresAuth)
+  const requiresAdmin = to.matched.some((record) => record.meta.requiresAdmin)
+  const isUserAdmin = await isAdmin()
+
+  if (requiresAuth && !auth.currentUser) {
+    next('/autorization')
+  } else if (requiresAdmin && !isUserAdmin) {
+    next('/') // или страницу с сообщением о недостаточных правах
+  } else {
+    next()
+  }
 })
 
 export default router
