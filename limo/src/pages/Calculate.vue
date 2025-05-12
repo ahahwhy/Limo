@@ -28,8 +28,6 @@ const formData = ref({
   createdAt: null,
 })
 
-//const showAdminFeatures = computed(() => authStore.isAdmin)
-
 const isLoading = ref(false)
 const error = ref('')
 const successMessage = ref('')
@@ -55,7 +53,6 @@ const disabledSaveButton = computed(() => {
 
 const calculateCalories = () => {
   const { age, weight, height, gender, activityLevel, goal } = formData.value
-
   const numAge = parseFloat(age)
   const numWeight = parseFloat(weight)
   const numHeight = parseFloat(height)
@@ -65,16 +62,12 @@ const calculateCalories = () => {
     return 0
   }
 
-  // Формула Миффлина-Сан Жеора
   const bmr =
     gender === 'male'
       ? 88.362 + 13.397 * numWeight + 4.799 * numHeight - 5.677 * numAge
       : 447.593 + 9.247 * numWeight + 3.098 * numHeight - 4.33 * numAge
 
-  // Базовый расход калорий с учетом активности
   let calories = Math.round(bmr * numActivity)
-
-  // Корректировка калорий в зависимости от цели
   switch (goal) {
     case 'lose':
       calories -= 500 // Дефицит 500 ккал для похудения
@@ -82,16 +75,14 @@ const calculateCalories = () => {
     case 'gain':
       calories += 500 // Профицит 500 ккал для набора массы
       break
-    // Для 'maintain' оставляем как есть
   }
-
   return calories
 }
 
 const addNewRecord = async () => {
   if (!user.value) {
     error.value = 'Для сохранения данных необходимо войти в систему'
-    return
+    returnЫ
   }
 
   try {

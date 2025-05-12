@@ -65,7 +65,7 @@ import { ru } from 'date-fns/locale'
 const auth = getAuth()
 const loading = ref(true)
 const caloriesData = ref([])
-const deletingId = ref(null) // Для отслеживания удаляемой записи
+const deletingId = ref(null)
 
 const activityLevels = {
   1.2: 'Сидячий',
@@ -116,7 +116,6 @@ const confirmDelete = (id) => {
     deleteRecord(id)
   }
 }
-
 const deleteRecord = async (id) => {
   try {
     deletingId.value = id
@@ -125,7 +124,6 @@ const deleteRecord = async (id) => {
 
     await deleteDoc(doc(db, 'users', user.uid, 'caloriesRecords', id))
 
-    // Обновляем список после удаления
     caloriesData.value = caloriesData.value.filter((item) => item.id !== id)
   } catch (error) {
     console.error('Ошибка при удалении:', error)

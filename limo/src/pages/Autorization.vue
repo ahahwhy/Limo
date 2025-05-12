@@ -80,11 +80,9 @@ export default {
     async login() {
       this.isLoading = true
       this.error = null
-
       try {
         await signInWithEmailAndPassword(auth, this.email, this.password)
 
-        // Проверка прав администратора после успешного входа
         const adminStatus = await isAdmin()
         if (adminStatus) {
           console.log('Вы администратор!')

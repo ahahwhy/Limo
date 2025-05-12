@@ -1,5 +1,5 @@
 import { createWebHistory, createRouter } from 'vue-router'
-import { auth } from '../firebase' // Добавленный импорт
+import { auth } from '../firebase'
 import { isAdmin } from '../services/auth'
 
 const routes = [
@@ -14,8 +14,8 @@ const routes = [
     component: () => import('@/pages/Autorization.vue'),
   },
   {
-    path: '/group-trainings', // Рекомендую использовать kebab-case в URL
-    name: 'GroupTrenings', // Но name может оставаться в camelCase
+    path: '/group-trainings',
+    name: 'GroupTrenings',
     component: () => import('@/pages/GroupTrenings.vue'),
     meta: { requiresAuth: true },
   },
@@ -28,6 +28,7 @@ const routes = [
     path: '/calculate',
     name: 'Calculate',
     component: () => import('@/pages/Calculate.vue'),
+    meta: { requiresAuth: true },
   },
   {
     path: '/account',
@@ -61,7 +62,7 @@ router.beforeEach(async (to, from, next) => {
   if (requiresAuth && !auth.currentUser) {
     next('/autorization')
   } else if (requiresAdmin && !isUserAdmin) {
-    next('/') // или страницу с сообщением о недостаточных правах
+    next('/')
   } else {
     next()
   }

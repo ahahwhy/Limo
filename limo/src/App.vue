@@ -8,7 +8,6 @@ const route = useRoute() // Получаем текущий маршрут
 <template>
   <div class="w-full">
     <div class="w-11/12 mx-auto mt-8 px-4 lg:px-6">
-      <!-- Условное отображение Header в зависимости от маршрута -->
       <Header />
 
       <div>

@@ -91,7 +91,6 @@ export default {
         this.isLoading = true
         const db = getFirestore()
 
-        // Загружаем всех пользователей
         const usersQuery = query(collection(db, 'users'))
         const usersSnapshot = await getDocs(usersQuery)
         this.allUsers = usersSnapshot.docs.map((doc) => ({
@@ -100,7 +99,6 @@ export default {
         }))
         this.stats.totalUsers = this.allUsers.length
 
-        // Подсчёт новых за период
         const periodQuery = this.getPeriodQuery(db)
         const periodSnapshot = await getDocs(periodQuery)
         this.stats.newUsers = periodSnapshot.size

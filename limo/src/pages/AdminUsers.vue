@@ -219,20 +219,11 @@ export default {
         const auth = getAuth()
         const db = getFirestore()
 
-        // 1. Удаляем из Authentication (если пользователь не текущий)
         if (this.currentUser?.uid !== userId) {
-          const userToDelete = auth.currentUser // Здесь нужно получить пользователя по ID
-          // В реальном приложении вам нужно будет реализовать получение пользователя по ID
-          // через Cloud Functions, так как клиентский SDK не позволяет удалять других пользователей напрямую
-          // await deleteAuthUser(userToDelete)
+          const userToDelete = auth.currentUser
         }
-
-        // 2. Удаляем из Firestore
         await deleteDoc(doc(db, 'users', userId))
-
-        // 3. Обновляем список
         await this.loadUsers()
-
         alert('Пользователь удален!')
       } catch (error) {
         console.error('Ошибка удаления:', error)

@@ -94,25 +94,19 @@ export default {
   },
   methods: {
     async register() {
-      // Валидация паролей
       if (this.password !== this.confirmPassword) {
         this.error = 'Пароли не совпадают'
         return
       }
-
       this.isLoading = true
       this.error = null
-
       try {
         const userCredential = await createUserWithEmailAndPassword(auth, this.email, this.password)
-
-        // Создание документа пользователя в Firestore
         await setDoc(doc(db, 'users', userCredential.user.uid), {
           email: this.email,
           role: 'user',
           createdAt: new Date(),
         })
-
         this.$router.push('/')
       } catch (error) {
         this.error = this.getErrorMessage(error.code)
